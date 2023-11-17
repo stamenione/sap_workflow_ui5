@@ -1,6 +1,6 @@
 _schema-version: "3.2"
 ID: ordersmanagement-v2
-version: 0.0.1
+version: 0.0.2
 modules:
 - name: ordersmanagement-v2-destination-content
   type: com.sap.application.content
