@@ -80,7 +80,8 @@ sap.ui.define(
           _getWorkflowRuntimeBaseURL: function () {
           var appId = this.getManifestEntry("/sap.app/id");
           var appPath = appId.replaceAll(".", "/");
-          var appModulePath = sap.ui.require.tourl(appPath);
+          var appModulePath = sap.ui.require.toUrl(appPath);
+          console.log(appModulePath);
 
           return appModulePath + "/bpmworkflowruntime/v1";
           },
