@@ -100,44 +100,60 @@ sap.ui.define(
           this._patchTaskInstance(outcomeId);
           },
 
-          _patchTaskInstance: function (outcomeId) {
-          const context = this.getModel("context").getData();
-          var data = {
-              status: "COMPLETED",
-              context: {...context, comment: context.comment || ''},
-              decision: outcomeId
-          };
+          async _patchTaskInstance(outcomeId) {
+            const context = this.getModel("context").getData();
+            const data = {
+                status: "COMPLETED",
+                context: { ...context, comment: context.comment || '' },
+                decision: outcomeId
+            };
+        
+            const url = this._getTaskInstancesBaseURL();
+            const csrfToken = await this._fetchToken();
+        
+            try {
+                const response = await fetch(url, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-Token": csrfToken
+                    },
+                    body: JSON.stringify(data)
+                });
+        
+                if (!response.ok) {
+                    throw new Error(`Failed to patch task instance. Status: ${response.status}`);
+                }
+        
+                this._refreshTaskList();
+            } catch (error) {
+                console.error("Error patching task instance:", error);
+                // Handle the error as needed
+            }
+        },
 
-          jQuery.ajax({
-              url: `${this._getTaskInstancesBaseURL()}`,
-              method: "PATCH",
-              contentType: "application/json",
-              async: true,
-              data: JSON.stringify(data),
-              headers: {
-              "X-CSRF-Token": this._fetchToken(),
-              },
-          }).done(() => {
-              this._refreshTaskList();
-          })
-          },
-
-          _fetchToken: function () {
-          var fetchedToken;
-
-          jQuery.ajax({
-              url: this._getWorkflowRuntimeBaseURL() + "/xsrf-token",
-              method: "GET",
-              async: false,
-              headers: {
-              "X-CSRF-Token": "Fetch",
-              },
-              success(result, xhr, data) {
-              fetchedToken = data.getResponseHeader("X-CSRF-Token");
-              },
-          });
-          return fetchedToken;
-          },
+        async _fetchToken() {
+            const tokenUrl = `${this._getWorkflowRuntimeBaseURL()}/xsrf-token`;
+        
+            try {
+                const response = await fetch(tokenUrl, {
+                    method: "GET",
+                    headers: {
+                        "X-CSRF-Token": "Fetch"
+                    }
+                });
+        
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch X-CSRF-Token. Status: ${response.status}`);
+                }
+        
+                return response.headers.get("X-CSRF-Token");
+            } catch (error) {
+                console.error("Error fetching X-CSRF-Token:", error);
+                // Handle the error as needed
+                return null;
+            }
+        },
 
           _refreshTaskList: function () {
           this.getInboxAPI().updateTask("NA", this.getTaskInstanceID());
